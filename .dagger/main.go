@@ -32,10 +32,15 @@ type Exchanges struct{}
 func (ci *Exchanges) PublishTag(
 	ctx context.Context,
 	sourceDir *dagger.Directory,
+	user *string,
 	token *dagger.Secret,
 ) error {
 	// Create Git repo access
-	repo, err := NewGit(ctx, sourceDir, token)
+	repo, err := NewGit(ctx, NewGitOptions{
+		SrcDir: sourceDir,
+		User:   user,
+		Token:  token,
+	})
 	if err != nil {
 		return err
 	}
@@ -113,7 +118,9 @@ func (mod *Exchanges) PublishContainer(
 	sourceDir *dagger.Directory,
 ) error {
 	// Create Git repo access
-	repo, err := NewGit(ctx, sourceDir, nil)
+	repo, err := NewGit(ctx, NewGitOptions{
+		SrcDir: sourceDir,
+	})
 	if err != nil {
 		return err
 	}
