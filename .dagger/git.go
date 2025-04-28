@@ -23,18 +23,21 @@ func NewGit(ctx context.Context, srcDir *dagger.Directory, token *dagger.Secret)
 		WithWorkdir("/git").
 		WithoutEntrypoint()
 
-	// Set authentication based on the token
-	tokenString, err := token.Plaintext(ctx)
-	if err != nil {
-		return Git{}, err
-	}
+	// Set token if provided
+	if token != nil {
+		// Set authentication based on the token
+		tokenString, err := token.Plaintext(ctx)
+		if err != nil {
+			return Git{}, err
+		}
 
-	// Change the url to use the token
-	container, err = container.WithExec([]string{
-		"git", "remote", "set-url", "origin", "https://lerenn:" + tokenString + "@github.com/cryptellation/exchanges.git",
-	}).Sync(ctx)
-	if err != nil {
-		return Git{}, err
+		// Change the url to use the token
+		container, err = container.WithExec([]string{
+			"git", "remote", "set-url", "origin", "https://lerenn:" + tokenString + "@github.com/cryptellation/checker.git",
+		}).Sync(ctx)
+		if err != nil {
+			return Git{}, err
+		}
 	}
 
 	// Set Git author
@@ -46,6 +49,35 @@ func NewGit(ctx context.Context, srcDir *dagger.Directory, token *dagger.Secret)
 	return Git{
 		container: container,
 	}, nil
+}
+
+// GetLastCommit returns the last commit SHA.
+func (g *Git) GetLastCommitShortSHA(ctx context.Context) (string, error) {
+	res, err := g.container.
+		WithExec([]string{"git", "rev-parse", "--short", "HEAD"}).
+		Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	// Remove potential new line
+	res = strings.TrimSuffix(res, "\n")
+
+	return res, nil
+}
+
+func (g *Git) GetActualBranch(ctx context.Context) (string, error) {
+	res, err := g.container.
+		WithExec([]string{"git", "rev-parse", "--abbrev-ref", "HEAD"}).
+		Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	// Remove potential new line
+	res = strings.TrimSuffix(res, "\n")
+
+	return res, nil
 }
 
 // GetLastCommitTitle returns the title of the last commit.
