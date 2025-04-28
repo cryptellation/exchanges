@@ -16,9 +16,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 
 	"github.com/cryptellation/version/dagger/internal/dagger"
+)
+
+const (
+	dockerImageName = "ghcr.io/cryptellation/exchanges"
 )
 
 type Exchanges struct{}
@@ -67,6 +72,122 @@ func (mod *Exchanges) UnitTests(sourceDir *dagger.Directory) *dagger.Container {
 		WithExec([]string{"sh", "-c",
 			"go test -tags=unit ./... | grep -v 'no test files'",
 		})
+}
+
+// Container returns a container with the application built in it.
+func (mod *Exchanges) Container(
+	sourceDir *dagger.Directory,
+	// +optional
+	targetPlatform string,
+) *dagger.Container {
+	// Get running OS, if that's an OS unsupported by Docker, replace by Linu
+	os := runtime.GOOS
+	if os == "darwin" {
+		os = "linux"
+	}
+
+	// Set default runner info and override by argument
+	runnerInfo := GoRunnersInfo["linux/amd64"]
+	if targetPlatform != "" {
+		info, ok := GoRunnersInfo[targetPlatform]
+		if ok {
+			runnerInfo = info
+		}
+	}
+
+	return sourceDir.DockerBuild(dagger.DirectoryDockerBuildOpts{
+		BuildArgs: []dagger.BuildArg{
+			{Name: "BUILDPLATFORM", Value: os + "/" + runtime.GOARCH},
+			{Name: "TARGETOS", Value: runnerInfo.OS},
+			{Name: "TARGETARCH", Value: runnerInfo.Arch},
+			{Name: "BUILDBASEIMAGE", Value: runnerInfo.BuildBaseImage},
+			{Name: "TARGETBASEIMAGE", Value: runnerInfo.TargetBaseImage},
+		},
+		Platform:   dagger.Platform(runnerInfo.OS + "/" + runnerInfo.Arch),
+		Dockerfile: "build/container/Dockerfile",
+	})
+}
+
+func (mod *Exchanges) PublishContainer(
+	ctx context.Context,
+	sourceDir *dagger.Directory,
+) error {
+	// Create Git repo access
+	repo, err := NewGit(ctx, sourceDir, nil)
+	if err != nil {
+		return err
+	}
+
+	// Get tags
+	tags, err := getDockerTags(ctx, repo)
+	if err != nil {
+		return err
+	}
+
+	return mod.publishContainer(ctx, sourceDir, tags)
+}
+
+func getDockerTags(ctx context.Context, repo Git) ([]string, error) {
+	tags := make([]string, 0)
+
+	// Generate last short sha
+	lastShortSha, err := repo.GetLastCommitShortSHA(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tags = append(tags, lastShortSha)
+
+	// Stop here if this not main branch
+	if name, err := repo.GetActualBranch(ctx); err != nil {
+		return nil, err
+	} else if name != "main" {
+		return tags, nil
+	}
+
+	// Check if there is a new sem ver, if there is none, just stop here
+	semVer, err := repo.GetLastTag(ctx)
+	if err != nil {
+		return nil, err
+	} else if semVer == "" {
+		return tags, nil
+	}
+
+	tags = append(tags, semVer)
+	tags = append(tags, "latest")
+
+	return tags, nil
+}
+
+// Publishes the worker docker image
+func (mod *Exchanges) publishContainer(
+	ctx context.Context,
+	sourceDir *dagger.Directory,
+	tags []string,
+) error {
+	// Get platforms availables
+	availablePlatforms := AvailablePlatforms()
+
+	// Get images for each platform
+	platformVariants := make([]*dagger.Container, 0, len(availablePlatforms))
+	for _, targetPlatform := range availablePlatforms {
+		runner := mod.Container(sourceDir, targetPlatform)
+		platformVariants = append(platformVariants, runner)
+	}
+
+	// Set publication options from images
+	publishOpts := dagger.ContainerPublishOpts{
+		PlatformVariants: platformVariants,
+	}
+
+	// Publish with tags
+	for _, tag := range tags {
+		addr := fmt.Sprintf("%s:%s", dockerImageName, tag)
+		if _, err := dag.Container().Publish(ctx, addr, publishOpts); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func goVersion() string {
