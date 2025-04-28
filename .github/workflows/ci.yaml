@@ -37,7 +37,7 @@ jobs:
 
   unit-tests:
     name: Run unit tests
-    needs: ["lint"]
+    needs: ["lint", "generate"]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
