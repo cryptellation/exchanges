@@ -40,7 +40,9 @@ func serve(cmd *cobra.Command, _ []string) error {
 	eg.Go(func() error {
 		return h.Serve()
 	})
-	defer h.Shutdown(ctx)
+	defer func() {
+		_ = h.Shutdown(ctx)
+	}()
 
 	// Create temporal client
 	temporalClient, err := createTemporalClient(ctx)
@@ -53,7 +55,7 @@ func serve(cmd *cobra.Command, _ []string) error {
 	w := temporalwk.New(temporalClient, api.WorkerTaskQueueName, temporalwk.Options{})
 
 	// Create a database client
-	db, err := createDBClient(ctx, w)
+	db, err := createDBClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -99,7 +101,7 @@ func createTemporalClient(ctx context.Context) (client.Client, error) {
 		backoff.WithMaxTries(10))
 }
 
-func createDBClient(ctx context.Context, w temporalwk.Worker) (*sql.Activities, error) {
+func createDBClient(ctx context.Context) (*sql.Activities, error) {
 	// Set backoff callback with dummy return value
 	callback := func() (*sql.Activities, error) {
 		return sql.New(ctx, viper.GetString(configs.EnvDBDSN))

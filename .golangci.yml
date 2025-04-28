@@ -16,7 +16,6 @@ linters:
     - exhaustive
     - funlen
     - gci
-    - gochecknoinits
     - gocognit
     - goconst
     - gocritic
