@@ -49,6 +49,15 @@ func (ci *Exchanges) PublishTag(
 	return repo.PublishTagFromReleaseTitle(ctx)
 }
 
+// Check returns a container that runs the checker.
+func (mod *Exchanges) Check(
+	sourceDir *dagger.Directory,
+) *dagger.Container {
+	c := dag.Container().From("ghcr.io/cryptellation/checker")
+	return mod.withGoCodeAndCacheAsWorkDirectory(c, sourceDir).
+		WithExec([]string{"checker"})
+}
+
 // Generate returns a container that runs the code generator.
 func (mod *Exchanges) Generate(
 	ctx context.Context,
