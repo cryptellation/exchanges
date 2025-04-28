@@ -39,6 +39,16 @@ func (ci *Exchanges) PublishTag(
 	return repo.PublishTagFromReleaseTitle(ctx)
 }
 
+// Generate returns a container that runs the code generator.
+func (mod *Exchanges) Generate(
+	ctx context.Context,
+	sourceDir *dagger.Directory,
+) *dagger.Container {
+	c := dag.Container().From("golang:" + goVersion() + "-alpine")
+	return mod.withGoCodeAndCacheAsWorkDirectory(c, sourceDir).
+		WithExec([]string{"sh", "-c", "go generate ./... && sh scripts/check-generation.sh"})
+}
+
 // Lint runs golangci-lint on the source code in the given directory.
 func (mod *Exchanges) Lint(sourceDir *dagger.Directory) *dagger.Container {
 	c := dag.Container().
