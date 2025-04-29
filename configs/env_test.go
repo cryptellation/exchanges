@@ -22,11 +22,11 @@ type ViperSuite struct {
 
 func (suite *ViperSuite) TestDBDSN() {
 	// Test the default value of the database DSN
-	suite.Equal(DefaultDBDSN, viper.GetString(EnvDBDSN))
+	suite.Equal(DefaultDBDSN, viper.GetString(EnvSQLDSN))
 
 	// Set environment variable for the database DSN
-	os.Setenv(strings.ToUpper(EnvDBDSN), "test")
+	os.Setenv(strings.ToUpper(EnvSQLDSN), "test")
 
 	// Test the overridden value of the database DSN
-	suite.Equal("test", viper.GetString(EnvDBDSN))
+	suite.Equal("test", viper.GetString(EnvSQLDSN))
 }

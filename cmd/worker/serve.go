@@ -104,7 +104,7 @@ func createTemporalClient(ctx context.Context) (client.Client, error) {
 func createDBClient(ctx context.Context) (*sql.Activities, error) {
 	// Set backoff callback with dummy return value
 	callback := func() (*sql.Activities, error) {
-		return sql.New(ctx, viper.GetString(configs.EnvDBDSN))
+		return sql.New(ctx, viper.GetString(configs.EnvSQLDSN))
 	}
 
 	// Retry with backoff

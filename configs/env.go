@@ -2,8 +2,8 @@ package configs
 
 import "github.com/spf13/viper"
 
-// EnvDBDSN is the environment variable name for the database DSN in the config.
-const EnvDBDSN = "DB_DSN"
+// EnvSQLDSN is the environment variable name for the database DSN in the config.
+const EnvSQLDSN = "SQL_DSN"
 
 // EnvBinanceAPIKey is the environment variable name for the Binance API key in the config.
 const EnvBinanceAPIKey = "BINANCE_API_KEY"
@@ -22,7 +22,7 @@ func init() {
 	viper.AutomaticEnv()
 
 	// Set default values for the config
-	viper.SetDefault(EnvDBDSN, DefaultDBDSN)
+	viper.SetDefault(EnvSQLDSN, DefaultDBDSN)
 	viper.SetDefault(EnvBinanceAPIKey, DefaultBinanceAPIKey)
 	viper.SetDefault(EnvBinanceSecretKey, DefaultBinanceSecretKey)
 	viper.SetDefault(EnvTemporalAddress, DefaultTemporalAddress)

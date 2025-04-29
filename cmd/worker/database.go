@@ -99,7 +99,7 @@ func addDatabaseCommands(cmd *cobra.Command) {
 	databaseCmd.AddCommand(rollbackCmd)
 
 	// Set flags
-	dsn := viper.GetString(configs.EnvDBDSN)
+	dsn := viper.GetString(configs.EnvSQLDSN)
 	databaseCmd.PersistentFlags().StringVarP(&driverNameFlag, "driver", "d", "postgres", "Set the database driver name")
 	databaseCmd.PersistentFlags().StringVarP(&dsnFlag, "dsn", "s", dsn, "Set the database data source name")
 
