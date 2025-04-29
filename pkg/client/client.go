@@ -15,8 +15,6 @@ type Client interface {
 	ListExchanges(ctx context.Context, params api.ListExchangesWorkflowParams) (api.ListExchangesWorkflowResults, error)
 	// Info calls the service info.
 	Info(ctx context.Context) (api.ServiceInfoResults, error)
-	// Close closes the client.
-	Close(ctx context.Context)
 }
 
 type client struct {
@@ -24,16 +22,8 @@ type client struct {
 }
 
 // New creates a new client to execute temporal workflows.
-func New(addr string) (Client, error) {
-	// Create temporal client
-	c, err := temporalclient.Dial(temporalclient.Options{
-		HostPort: addr,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &client{temporal: c}, nil
+func New(cl temporalclient.Client) Client {
+	return &client{temporal: cl}
 }
 
 // GetExchange calls the exchange get workflow.
@@ -74,11 +64,6 @@ func (c client) ListExchanges(
 	// Get result and return
 	err = exec.Get(ctx, &res)
 	return res, err
-}
-
-// Close closes the client.
-func (c client) Close(_ context.Context) {
-	c.temporal.Close()
 }
 
 // Info calls the service info.

@@ -4,13 +4,13 @@
 package test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/cryptellation/exchanges/configs"
 	"github.com/cryptellation/exchanges/pkg/client"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
+	temporalclient "go.temporal.io/sdk/client"
 )
 
 func TestEndToEndSuite(t *testing.T) {
@@ -19,17 +19,20 @@ func TestEndToEndSuite(t *testing.T) {
 
 type EndToEndSuite struct {
 	suite.Suite
-	client client.Client
+	client         client.Client
+	temporalclient temporalclient.Client
 }
 
 func (suite *EndToEndSuite) SetupSuite() {
-	client, err := client.New(
-		viper.GetString(configs.EnvTemporalAddress),
-	)
+	tc, err := temporalclient.Dial(temporalclient.Options{
+		HostPort: viper.GetString(configs.EnvTemporalAddress),
+	})
 	suite.Require().NoError(err)
-	suite.client = client
+	suite.temporalclient = tc
+
+	suite.client = client.New(tc)
 }
 
 func (suite *EndToEndSuite) TearDownSuite() {
-	suite.client.Close(context.Background())
+	suite.temporalclient.Close()
 }
