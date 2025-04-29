@@ -25,7 +25,7 @@ type ExchangesSuite struct {
 }
 
 func (suite *ExchangesSuite) SetupSuite() {
-	act, err := New(context.Background(), viper.GetString(configs.EnvDBDSN))
+	act, err := New(context.Background(), viper.GetString(configs.EnvSQLDSN))
 	suite.Require().NoError(err)
 
 	mig, err := dbmigrator.NewMigrator(context.Background(), act.db, up.Migrations, down.Migrations, nil)
