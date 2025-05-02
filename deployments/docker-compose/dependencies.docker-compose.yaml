@@ -11,12 +11,18 @@ services:
       - ./postgresql:/docker-entrypoint-initdb.d/
     environment:
       POSTGRES_PASSWORD: cryptellation_exchanges
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cryptellation-exchanges
 
   temporal:
     depends_on:
-      - postgresql
+      postgresql:
+        condition: service_healthy
     environment:
       - DB=postgres12
       - DB_PORT=5432
@@ -49,7 +55,8 @@ services:
 
   migrator:
     depends_on:
-      - postgresql
+      postgresql:
+        condition: service_healthy
     image: golang:1.23.8-alpine
     command: ["go", "run", "./cmd/worker", "database", "migrate"]
     working_dir: /go/src/github.com/cryptellation/exchanges
@@ -58,7 +65,7 @@ services:
     volumes:
       - gocache:/go/pkg/mod
       - gobuild:/root/.cache/go-build
-      - .:/go/src/github.com/cryptellation/exchanges
+      - ../..:/go/src/github.com/cryptellation/exchanges
     networks:
       - cryptellation-exchanges
 
