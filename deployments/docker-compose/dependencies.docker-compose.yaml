@@ -37,11 +37,18 @@ services:
       - 7233
     volumes:
       - ./temporal:/etc/temporal/config/dynamicconfig
+    healthcheck:
+      test:
+        ["CMD","tctl", "--address", "temporal:7233", "workflow", "list", "||", "exit 1"]
+      interval: 1s
+      timeout: 5s
+      retries: 30
     networks:
       - cryptellation-exchanges
   temporal-ui:
     depends_on:
-      - temporal
+      temporal:
+        condition: service_healthy
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
