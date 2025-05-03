@@ -47,6 +47,7 @@ func (wf *workflows) Register(w worker.Worker) {
 	w.RegisterWorkflowWithOptions(wf.ListExchangesWorkflow, workflow.RegisterOptions{
 		Name: api.ListExchangesWorkflowName,
 	})
+
 	w.RegisterWorkflowWithOptions(ServiceInfoWorkflow, workflow.RegisterOptions{
 		Name: api.ServiceInfoWorkflowName,
 	})
