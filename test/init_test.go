@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/cryptellation/exchanges/configs"
-	"github.com/cryptellation/exchanges/pkg/client"
+	"github.com/cryptellation/exchanges/pkg/clients"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	temporalclient "go.temporal.io/sdk/client"
@@ -19,7 +19,7 @@ func TestEndToEndSuite(t *testing.T) {
 
 type EndToEndSuite struct {
 	suite.Suite
-	client         client.Client
+	client         clients.Client
 	temporalclient temporalclient.Client
 }
 
@@ -30,7 +30,7 @@ func (suite *EndToEndSuite) SetupSuite() {
 	suite.Require().NoError(err)
 	suite.temporalclient = tc
 
-	suite.client = client.New(tc)
+	suite.client = clients.New(tc)
 }
 
 func (suite *EndToEndSuite) TearDownSuite() {
