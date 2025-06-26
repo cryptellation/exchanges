@@ -3,9 +3,9 @@ package configs
 const (
 	// DefaultDBDSN is the default database DSN.
 	DefaultDBDSN = "host=localhost " +
-		"user=cryptellation_exchanges " +
-		"password=cryptellation_exchanges " +
-		"dbname=cryptellation_exchanges " +
+		"user=cryptellation " +
+		"password=cryptellation " +
+		"dbname=exchanges " +
 		"sslmode=disable"
 
 	// DefaultBinanceAPIKey is the default Binance API key.

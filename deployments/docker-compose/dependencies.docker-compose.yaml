@@ -10,7 +10,7 @@ services:
     volumes:
       - ./postgresql:/docker-entrypoint-initdb.d/
     environment:
-      POSTGRES_PASSWORD: cryptellation_exchanges
+      POSTGRES_PASSWORD: cryptellation
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
@@ -68,7 +68,7 @@ services:
     command: ["go", "run", "./cmd/worker", "database", "migrate"]
     working_dir: /go/src/github.com/cryptellation/exchanges
     environment:
-      SQL_DSN: "host=postgresql user=cryptellation_exchanges password=cryptellation_exchanges dbname=cryptellation_exchanges sslmode=disable"
+      SQL_DSN: "host=postgresql user=cryptellation password=cryptellation dbname=exchanges sslmode=disable"
     volumes:
       - gocache:/go/pkg/mod
       - gobuild:/root/.cache/go-build
