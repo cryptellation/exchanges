@@ -88,6 +88,25 @@ func (mod *Exchanges) UnitTests(sourceDir *dagger.Directory) *dagger.Container {
 		})
 }
 
+// integrationDBTests runs the integration tests for the database against a fresh Postgres container.
+func (mod *Exchanges) integrationDBTests(ctx context.Context, sourceDir *dagger.Directory) *dagger.Container {
+	pg := PostgresContainer(ctx, dag, sourceDir)
+	dsn := "host=postgres user=cryptellation password=cryptellation dbname=exchanges sslmode=disable"
+	c := dag.Container().
+		From("golang:"+goVersion()+"-alpine").
+		WithServiceBinding("postgres", pg).
+		WithEnvVariable("SQL_DSN", dsn)
+	c = mod.withGoCodeAndCacheAsWorkDirectory(c, sourceDir)
+	return c.WithExec([]string{"go", "test", "-tags=integration", "./svc/db/..."})
+}
+
+// IntegrationTests returns all integration test containers for this service.
+func (mod *Exchanges) IntegrationTests(ctx context.Context, sourceDir *dagger.Directory) []*dagger.Container {
+	return []*dagger.Container{
+		mod.integrationDBTests(ctx, sourceDir),
+	}
+}
+
 // Container returns a container with the application built in it.
 func (mod *Exchanges) Container(
 	sourceDir *dagger.Directory,
