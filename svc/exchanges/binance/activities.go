@@ -42,7 +42,7 @@ func New(apiKey, secretKey string) (*Activities, error) {
 		return nil, errors.New("API key cannot be empty")
 	}
 	if secretKey == "" {
-		return nil, errors.New("Secret key cannot be empty")
+		return nil, errors.New("secret key cannot be empty")
 	}
 
 	c := client.NewClient(apiKey, secretKey)
