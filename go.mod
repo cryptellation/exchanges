@@ -6,7 +6,7 @@ require (
 	github.com/adshao/go-binance/v2 v2.8.2
 	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/cryptellation/dbmigrator v1.0.1
-	github.com/cryptellation/health v1.0.1
+	github.com/cryptellation/health v1.1.1
 	github.com/cryptellation/version v1.1.0
 	github.com/google/go-cmp v0.7.0
 	github.com/jmoiron/sqlx v1.4.0

@@ -24,9 +24,10 @@ type BinanceSuite struct {
 }
 
 func (suite *BinanceSuite) SetupTest() {
-	service := New(
+	service, err := New(
 		viper.GetString(configs.EnvBinanceAPIKey),
 		viper.GetString(configs.EnvBinanceSecretKey))
+	suite.Require().NoError(err)
 	suite.service = service
 }
 
