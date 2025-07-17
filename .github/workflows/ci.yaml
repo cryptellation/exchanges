@@ -74,7 +74,14 @@ jobs:
         with:
           version: latest
           verb: call
-          args: integration-tests --source-dir=. stdout 
+          args: >-
+            integration-tests
+            --source-dir=.
+            --binance-api-key=env:BINANCE_API_KEY
+            --binance-secret-key=env:BINANCE_SECRET_KEY
+        env:
+          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+          BINANCE_SECRET_KEY: ${{ secrets.BINANCE_SECRET_KEY }} 
 
   publish-tag:
     name: Publish the tag of the new version
