@@ -2,7 +2,10 @@ package main
 
 import (
 	"maps"
+	"runtime"
 	"slices"
+
+	"github.com/cryptellation/exchanges/dagger/internal/dagger"
 )
 
 // RunnerInfo represents a Docker runner.
@@ -29,4 +32,67 @@ var (
 
 func AvailablePlatforms() []string {
 	return slices.Collect(maps.Keys(GoRunnersInfo))
+}
+
+// Runner returns a container running the exchanges service built from the official Dockerfile,
+// with its own Postgres and a given Temporal service.
+func Runner(
+	_ *dagger.Client,
+	sourceDir *dagger.Directory,
+	temporal *dagger.Service,
+	db *dagger.Service,
+	binanceApiKey *dagger.Secret, //nolint:revive,stylecheck // var-naming: keep original name for CLI compatibility
+	binanceSecretKey *dagger.Secret,
+) *dagger.Service {
+	// Get the OS and architecture of the current machine
+	os := runtime.GOOS
+	if os == "darwin" {
+		os = "linux"
+	}
+	arch := runtime.GOARCH
+
+	// Get the runner info for the current platform
+	runnerInfo := GoRunnersInfo["linux/amd64"]
+	key := os + "/" + arch
+	if info, ok := GoRunnersInfo[key]; ok {
+		runnerInfo = info
+	}
+
+	// Build the container using the Dockerfile in the source directory
+	container := sourceDir.DockerBuild(dagger.DirectoryDockerBuildOpts{
+		BuildArgs: []dagger.BuildArg{
+			{Name: "BUILDPLATFORM", Value: os + "/" + arch},
+			{Name: "TARGETOS", Value: runnerInfo.OS},
+			{Name: "TARGETARCH", Value: runnerInfo.Arch},
+			{Name: "BUILDBASEIMAGE", Value: runnerInfo.BuildBaseImage},
+			{Name: "TARGETBASEIMAGE", Value: runnerInfo.TargetBaseImage},
+		},
+		Platform:   dagger.Platform(runnerInfo.OS + "/" + runnerInfo.Arch),
+		Dockerfile: "build/container/Dockerfile",
+	})
+
+	// Bind the Postgres service to the container
+	container = container.WithServiceBinding("postgres", db)
+	container = container.WithEnvVariable(
+		"SQL_DSN",
+		"host=postgres user=cryptellation password=cryptellation dbname=exchanges sslmode=disable",
+	)
+
+	// Bind the Temporal service to the container
+	container = container.WithServiceBinding("temporal", temporal)
+	container = container.WithEnvVariable("TEMPORAL_ADDRESS", "temporal:7233")
+
+	// Add Binance API secrets
+	container = container.WithSecretVariable("BINANCE_API_KEY", binanceApiKey)
+	container = container.WithSecretVariable("BINANCE_SECRET_KEY", binanceSecretKey)
+
+	// Expose the default port (9000) as in Dockerfile
+	container = container.WithExposedPort(9000)
+
+	return container.AsService(dagger.ContainerAsServiceOpts{
+		Args: []string{"sh", "-c", `
+			worker database migrate
+			worker serve
+		`},
+	})
 }
